@@ -19,7 +19,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Boshqaruv paneli", to: "/", icon: LayoutDashboard },
+  { label: "Bosh sahifa", to: "/", icon: LayoutDashboard },
   { label: "Katalog (OPAC)", to: "/catalog", icon: LibraryBig },
   {
     label: "Kitoblar",

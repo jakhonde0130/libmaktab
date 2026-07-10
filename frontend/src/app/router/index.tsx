@@ -18,8 +18,8 @@ const BookDetailPage = lazy(() =>
 const CatalogSearchPage = lazy(() =>
   import("@/modules/catalog/components/catalog-search-page").then((m) => ({ default: m.CatalogSearchPage }))
 );
-const DashboardPage = lazy(() =>
-  import("@/modules/dashboard/components/dashboard-page").then((m) => ({ default: m.DashboardPage }))
+const HomePage = lazy(() =>
+  import("@/modules/dashboard/components/home-page").then((m) => ({ default: m.HomePage }))
 );
 const BookCreatePage = lazy(() =>
   import("@/modules/books/components/book-create-page").then((m) => ({ default: m.BookCreatePage }))
@@ -81,7 +81,7 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: withSuspense(<DashboardPage />) },
+      { index: true, element: withSuspense(<HomePage />) },
       {
         path: "books",
         children: [
