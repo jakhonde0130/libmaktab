@@ -1,0 +1,23 @@
+{
+  "name": "ilms",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Integrated Library Management System (ILMS) - monorepo",
+  "scripts": {
+    "dev": "pnpm --parallel --filter ./frontend --filter ./backend dev",
+    "dev:frontend": "pnpm --filter ./frontend dev",
+    "dev:backend": "pnpm --filter ./backend dev",
+    "build": "pnpm --filter ./frontend build && pnpm --filter ./backend build",
+    "build:frontend": "pnpm --filter ./frontend build",
+    "build:backend": "pnpm --filter ./backend build",
+    "lint": "pnpm --filter ./frontend lint && pnpm --filter ./backend lint",
+    "typecheck": "pnpm --filter ./frontend typecheck && pnpm --filter ./backend typecheck",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset",
+    "supabase:push": "supabase db push"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
