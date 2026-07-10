@@ -1,7 +1,12 @@
+import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildPageMeta, toRange, type PaginationInput } from "@/lib/pagination.js";
+import { supabaseAdmin } from "@/lib/supabase.js";
 import { mapSupabaseError } from "@/lib/supabase-errors.js";
+import { AppError } from "@/middleware/errorHandler.js";
 import type { BookListQuery } from "@/modules/books/books.schema.js";
+
+const COVER_BUCKET = "book-covers";
 
 const LIST_SELECT = `
   *,
@@ -135,6 +140,30 @@ export const booksRepository = {
   async remove(client: SupabaseClient, id: string) {
     const { error } = await client.from("books").delete().eq("id", id);
     if (error) throw mapSupabaseError(error);
+  },
+
+  /** Uploads to the public book-covers bucket via the service role (consistent with
+   *  electronic-library uploads) and stores the resulting public URL on the book. */
+  async uploadCover(client: SupabaseClient, bookId: string, file: Express.Multer.File) {
+    const path = `${bookId}/${randomUUID()}.${file.originalname.split(".").pop() ?? "jpg"}`;
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(COVER_BUCKET)
+      .upload(path, file.buffer, { contentType: file.mimetype, upsert: true });
+    if (uploadError) {
+      throw new AppError(`Cover upload failed: ${uploadError.message}`, 500, "STORAGE_ERROR");
+    }
+
+    const { data: publicUrlData } = supabaseAdmin.storage.from(COVER_BUCKET).getPublicUrl(path);
+
+    const { data, error } = await client
+      .from("books")
+      .update({ cover_image_url: publicUrlData.publicUrl })
+      .eq("id", bookId)
+      .select()
+      .single();
+    if (error) throw mapSupabaseError(error);
+    return data;
   },
 
   async replaceAuthors(client: SupabaseClient, bookId: string, authorIds: string[]) {

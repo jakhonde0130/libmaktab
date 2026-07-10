@@ -24,7 +24,9 @@ export function BookCreatePage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Yangi kitob</h1>
-        <p className="text-sm text-muted-foreground">Bibliografik ma'lumotlarni kiriting</p>
+        <p className="text-sm text-muted-foreground">
+          Bibliografik ma'lumotlarni kiriting — muqova rasmi va PDF faylni kitob saqlangandan so'ng qo'shasiz
+        </p>
       </div>
       <BookForm onSubmit={handleSubmit} isSubmitting={createBook.isPending} submitLabel="Yaratish" />
     </div>

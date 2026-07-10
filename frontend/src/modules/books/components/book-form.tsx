@@ -236,7 +236,6 @@ export function BookForm({ defaultValues, onSubmit, isSubmitting, submitLabel = 
                 </FormItem>
               )}
             />
-            {textField("coverImageUrl", "Muqova rasmi (URL)", "https://...")}
           </CardContent>
         </Card>
 

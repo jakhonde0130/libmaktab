@@ -6,6 +6,7 @@ import { ApiError } from "@/lib/api-client";
 import { CopiesPanel } from "@/modules/book-copies/components/copies-panel";
 import { getBookAdmin } from "@/modules/books/api/books-api";
 import { BookForm } from "@/modules/books/components/book-form";
+import { CoverImageUpload } from "@/modules/books/components/cover-image-upload";
 import { useUpdateBook } from "@/modules/books/hooks/use-book-mutations";
 import type { BookFormValues } from "@/modules/books/types/book";
 import { ElectronicFilesPanel } from "@/modules/electronic-library/components/electronic-files-panel";
@@ -72,6 +73,7 @@ export function BookEditPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{book.title}</h1>
         <p className="text-sm text-muted-foreground">Kitobni tahrirlash</p>
       </div>
+      <CoverImageUpload bookId={id} coverImageUrl={book.cover_image_url} />
       <BookForm
         key={id}
         defaultValues={defaultValues}
