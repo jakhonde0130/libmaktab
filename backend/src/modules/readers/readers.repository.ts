@@ -3,10 +3,12 @@ import { buildPageMeta, toRange, type PaginationInput } from "@/lib/pagination.j
 import { mapSupabaseError } from "@/lib/supabase-errors.js";
 import type { ReaderListQuery } from "@/modules/readers/readers.schema.js";
 
+// users<->classes has two FK paths (users.class_id, and classes.homeroom_teacher_id
+// back to users) — PostgREST can't pick one without an explicit constraint hint.
 const SELECT = `
   id, full_name, pinfl, phone, email, reader_category, role,
   photo_url, library_card_barcode, qr_code_url, status, created_at, updated_at,
-  class:classes(id, grade_number, section, name)
+  class:classes!users_class_id_fkey(id, grade_number, section, name)
 `;
 
 export const readersRepository = {
