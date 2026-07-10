@@ -1,9 +1,13 @@
 import { Download, Printer } from "lucide-react";
+import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { exportToCsv } from "@/lib/export-csv";
+import { generateLibraryReport } from "@/lib/excel-report";
 import { useDashboardSummary } from "@/modules/dashboard/hooks/use-dashboard-summary";
 import { useClassBreakdown, useSubjectBreakdown, useYearBreakdown } from "@/modules/reports/hooks/use-reports";
 
@@ -17,28 +21,25 @@ const STAT_LABELS: [string, string][] = [
   ["overdueLoans", "Muddati o'tgan"],
 ];
 
+const INSTITUTION_NAME_KEY = "ilms.institutionName";
+
 function ChartCard<T extends object>({
   title,
   data,
   dataKey,
   nameKey,
   isLoading,
-  onExport,
 }: {
   title: string;
   data: T[] | undefined;
   dataKey: keyof T & string;
   nameKey: keyof T & string;
   isLoading: boolean;
-  onExport: () => void;
 }) {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
-        <Button variant="ghost" size="icon" onClick={onExport} disabled={!data?.length}>
-          <Download className="size-4" />
-        </Button>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -74,17 +75,60 @@ export function ReportsPage() {
   const { data: subject, isLoading: isSubjectLoading } = useSubjectBreakdown();
   const { data: year, isLoading: isYearLoading } = useYearBreakdown();
 
+  const [institutionName, setInstitutionName] = useState(
+    () => localStorage.getItem(INSTITUTION_NAME_KEY) ?? "Umumiy o'rta ta'lim maktabi kutubxonasi"
+  );
+  const [isExporting, setIsExporting] = useState(false);
+
+  async function handleExcelExport() {
+    if (!summary) return;
+    localStorage.setItem(INSTITUTION_NAME_KEY, institutionName);
+    setIsExporting(true);
+    try {
+      await generateLibraryReport({
+        institutionName,
+        summary,
+        classBreakdown: classBreakdown ?? [],
+        subjectBreakdown: subject ?? [],
+        yearBreakdown: year ?? [],
+      });
+    } catch {
+      toast.error("Hisobotni yaratib bo'lmadi");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  const isLoading = isSummaryLoading || isClassLoading || isSubjectLoading || isYearLoading;
+
   return (
     <div className="space-y-6 print:space-y-4">
-      <div className="flex items-center justify-between print:hidden">
+      <div className="flex flex-wrap items-end justify-between gap-4 print:hidden">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Hisobotlar</h1>
           <p className="text-sm text-muted-foreground">Statistika, grafiklar va eksport</p>
         </div>
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer className="size-4" />
-          Chop etish
-        </Button>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="institution-name" className="text-xs text-muted-foreground">
+              Muassasa nomi (hisobot sarlavhasi uchun)
+            </Label>
+            <Input
+              id="institution-name"
+              value={institutionName}
+              onChange={(e) => setInstitutionName(e.target.value)}
+              className="w-72"
+            />
+          </div>
+          <Button variant="outline" onClick={() => window.print()}>
+            <Printer className="size-4" />
+            Chop etish
+          </Button>
+          <Button onClick={handleExcelExport} disabled={isLoading || isExporting}>
+            <Download className="size-4" />
+            {isExporting ? "Tayyorlanmoqda..." : "Excelga yuklab olish"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -107,32 +151,11 @@ export function ReportsPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard
-          title="Sinf kesimida"
-          data={classBreakdown}
-          dataKey="reader_count"
-          nameKey="class_name"
-          isLoading={isClassLoading}
-          onExport={() => classBreakdown && exportToCsv("class-breakdown", classBreakdown)}
-        />
-        <ChartCard
-          title="Fan kesimida"
-          data={subject}
-          dataKey="book_count"
-          nameKey="subject_name"
-          isLoading={isSubjectLoading}
-          onExport={() => subject && exportToCsv("subject-breakdown", subject)}
-        />
+        <ChartCard title="Sinf kesimida" data={classBreakdown} dataKey="reader_count" nameKey="class_name" isLoading={isClassLoading} />
+        <ChartCard title="Fan kesimida" data={subject} dataKey="book_count" nameKey="subject_name" isLoading={isSubjectLoading} />
       </div>
 
-      <ChartCard
-        title="Yil kesimida"
-        data={year}
-        dataKey="book_count"
-        nameKey="publication_year"
-        isLoading={isYearLoading}
-        onExport={() => year && exportToCsv("year-breakdown", year)}
-      />
+      <ChartCard title="Yil kesimida" data={year} dataKey="book_count" nameKey="publication_year" isLoading={isYearLoading} />
     </div>
   );
 }
